@@ -35,6 +35,7 @@ routes.post('/Login', async (req, res) => {
 
         return res.status(200).json(usuario);
     } catch (error) {
+        
         console.error(error);
         return res.status(500).json({ message: 'Erro ao realizar login', error });
     }
@@ -68,24 +69,23 @@ routes.get('/questao', async (req, res) => {
         return res.status(500).json({ message: 'Erro ao buscar questões', error });
     }
 });
+routes.get('/questao1', async (req, res) => {
+    try {
+        const questoes = await sql`SELECT * FROM perguntas`;
+        return res.status(200).json(questoes);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erro ao buscar questões', error });
+    }
+});
 
 // CADASTRAR QUESTÃO
 routes.post('/questao/cadastrar', async (req, res) => {
     try {
         const { questao, questao1, questao2, questao3, questao4, gabarito, nivel } = req.body;
-
-        const gabaritoRepetido = await sql`
-            SELECT * FROM perguntas WHERE gabarito = ${gabarito}
-        `;
-
-        if (gabaritoRepetido.length > 0) {
-            return res.status(400).json({ message: 'Já existe uma questão com esse gabarito.' });
-        }
-
-        const insert = await sql`
+        const insert = await sql `
             INSERT INTO perguntas (questao, questao1, questao2, questao3, questao4, gabarito, nivel)
             VALUES (${questao}, ${questao1}, ${questao2}, ${questao3}, ${questao4}, ${gabarito}, ${nivel})
-            RETURNING *;
         `;
 
         return res.status(201).json({ message: 'Questão cadastrada com sucesso!', questao: insert[0] });
@@ -105,8 +105,7 @@ routes.put('/Atualizar/:id', async (req, res) => {
             UPDATE perguntas
             SET questao = ${questao}, questao1 = ${questao1}, questao2 = ${questao2}, 
                 questao3 = ${questao3}, questao4 = ${questao4}, gabarito = ${gabarito}, nivel = ${nivel}
-            WHERE id = ${id}
-            RETURNING *;
+            WHERE id = ${id};
         `;
 
         if (result.length === 0) {
@@ -123,6 +122,7 @@ routes.put('/Atualizar/:id', async (req, res) => {
 // DELETAR UMA QUESTÃO
 routes.delete('/deletequestao/:id', async (req, res) => {
     const { id } = req.params;
+    console.log(`tentando deletar ${id}`)
 
     try {
         const result = await sql`DELETE FROM perguntas WHERE id = ${id}`;
@@ -137,5 +137,6 @@ routes.delete('/deletequestao/:id', async (req, res) => {
         return res.status(500).json({ message: 'Erro ao excluir questão', error });
     }
 });
+
 
 export default routes;

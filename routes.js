@@ -5,9 +5,9 @@ import bcrypt from "bcrypt";
 const routes = express.Router();
 
 // BUSCAR TODOS OS USUÁRIOS
-routes.get('/usuarios', async (req, res) => {
+routes.get('/Usuarios', async (req, res) => {
     try {
-        const usuarios = await sql`SELECT * FROM usuario`;
+        const usuarios = await sql`SELECT * FROM Usuarios`;
         return res.status(200).json(usuarios);
     } catch (error) {
         console.error(error);
@@ -15,41 +15,17 @@ routes.get('/usuarios', async (req, res) => {
     }
 });
 
-// LOGIN COM COMPARAÇÃO DE SENHA (HASH)
-routes.post('/Login', async (req, res) => {
-    const { email, senha } = req.body;
-    try {
-        const resultado = await sql`SELECT * FROM usuario WHERE email = ${email}`;
-        
-        if (resultado.length === 0) {
-            return res.status(401).json({ message: 'Email não encontrado' });
-        }
+//  ROTA DE CADASTRO
 
-        const usuario = resultado[0]; 
-        const senhaValida = await bcrypt.compare(senha, usuario.senha);
-        console.log(senhaValida)
-
-        if (!senhaValida) {
-            return res.status(401).json({ message: 'Senha incorreta' });
-        }
-
-        return res.status(200).json(usuario);
-    } catch (error) {
-        
-        console.error(error);
-        return res.status(500).json({ message: 'Erro ao realizar login', error });
-    }
-});
-
-// CADASTRAR USUÁRIO COM SENHA CRIPTOGRAFADA
 routes.post('/Cadastrar', async (req, res) => {
-    const { email, senha } = req.body;
+    const { Email, Senha } = req.body;
+
     try {
-        const senhaCriptografada = await bcrypt.hash(senha, 10);
+        const senhaCriptografada = await bcrypt.hash(Senha, 10);
 
         await sql`
-            INSERT INTO usuario (email, senha, funcao, status)
-            VALUES (${email}, ${senhaCriptografada}, 'padrao', 1)
+            INSERT INTO Usuarios (Email, Senha, Status)
+            VALUES (${Email}, ${senhaCriptografada}, 'aluno')
         `;
 
         return res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
@@ -59,28 +35,74 @@ routes.post('/Cadastrar', async (req, res) => {
     }
 });
 
-// BUSCAR TODAS AS QUESTÕES
-routes.get('/questao', async (req, res) => {
+// LOGIN COM COMPARAÇÃO DE SENHA (HASH)
+routes.post('/Login', async (req, res) => { 
+    const { Email, Senha } = req.body;
+
     try {
-        const questoes = await sql`SELECT * FROM perguntas ORDER BY RANDOM()`;
-        return res.status(200).json(questoes);
+        const resultado = await sql`
+            SELECT * FROM Usuarios WHERE Email = ${Email}
+        `;
+        
+        if (resultado.length === 0) {
+            return res.status(401).json({ message: 'Usuário não encontrado' });
+        }
+
+        const Usuario = resultado[0]; 
+        const SenhaValida = await bcrypt.compare(Senha, Usuario.Senha);
+        console.log(SenhaValida);
+
+        if (!SenhaValida) {
+            return res.status(401).json({ message: 'Ops... Tente  novamente' });
+        }
+
+        return res.status(200).json(Usuario);
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Erro ao buscar questões', error });
-    }
-});
-routes.get('/questao1', async (req, res) => {
-    try {
-        const questoes = await sql`SELECT * FROM perguntas`;
-        return res.status(200).json(questoes);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Erro ao buscar questões', error });
+        return res.status(500).json({ message: 'Erro ao realizar login', error });
     }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// BUSCAR TODOS OS FILMES/SERIES
+routes.get('/Filme/Serie', async (req, res) => {
+    try {
+        const Filmes = await sql`SELECT * FROM Filmes`;
+        return res.status(200).json(Filmes);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Erro ao buscar filmes', error });
+    }
+});
+// routes.get('/questao1', async (req, res) => {
+//     try {
+//         const questoes = await sql`SELECT * FROM perguntas`;
+//         return res.status(200).json(questoes);
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ message: 'Erro ao buscar questões', error });
+//     }
+// });
+
 // CADASTRAR QUESTÃO
-routes.post('/questao/cadastrar', async (req, res) => {
+routes.post('/filme/cadastrar', async (req, res) => {
     try {
         const { questao, questao1, questao2, questao3, questao4, gabarito, nivel } = req.body;
         const insert = await sql `
@@ -88,10 +110,10 @@ routes.post('/questao/cadastrar', async (req, res) => {
             VALUES (${questao}, ${questao1}, ${questao2}, ${questao3}, ${questao4}, ${gabarito}, ${nivel})
         `;
 
-        return res.status(201).json({ message: 'Questão cadastrada com sucesso!', questao: insert[0] });
+        return res.status(201).json({ message: 'filme cadastrado com sucesso!', questao: insert[0] });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ message: 'Erro ao cadastrar questão', error });
+        return res.status(500).json({ message: 'Erro ao cadastrar filme', error });
     }
 });
 
@@ -120,12 +142,12 @@ routes.put('/Atualizar/:id', async (req, res) => {
 });
 
 // DELETAR UMA QUESTÃO
-routes.delete('/deletequestao/:id', async (req, res) => {
+routes.delete('/deletefilme/:id', async (req, res) => {
     const { id } = req.params;
     console.log(`tentando deletar ${id}`)
 
     try {
-        const result = await sql`DELETE FROM perguntas WHERE id = ${id}`;
+        const result = await sql`DELETE FROM filme WHERE id = ${id}`;
 
         if (result.length === 0) {
             return res.status(404).json({ message: 'Questão não encontrada' });
